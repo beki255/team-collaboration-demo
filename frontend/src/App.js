@@ -1,24 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function App() {
-  // 1. Mock Data (ጊዜያዊ መረጃ - Backend እስኪገናኝ)
-  const [menu, setMenu] = useState([
-    { id: 1, name: "Special Burger", price: 350 },
-    { id: 2, name: "Club Sandwich", price: 280 }
-  ]);
-
+  const [menu, setMenu] = useState([]);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
 
-  // 2. Form Submit ሲደረግ በጊዜያዊነት መረጃ የሚጨምር (Local Test)
+  // 1. Backend API በመጥራት የምግቦችን ዝርዝር መቀበል (GET)
+  const fetchMenu = () => {
+    fetch('http://localhost:5000/api/menu')
+      .then(res => res.json())
+      .then(data => setMenu(data))
+      .catch(err => console.error("Error fetching menu:", err));
+  };
+
+  useEffect(() => {
+    fetchMenu(); // ገጹ ሲከፈት መረጃውን ከ Backend ያመጣል
+  }, []);
+
+  // 2. አዲስ ምግብ ወደ Backend መላክ (POST)
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!name || !price) return;
-    
-    const newItem = { id: Date.now(), name, price: Number(price) };
-    setMenu([...menu, newItem]); // UI ላይ ብቻ ይጨምረዋል
-    setName('');
-    setPrice('');
+
+    fetch('http://localhost:5000/api/menu', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, price: Number(price) })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log("Success:", data);
+        fetchMenu(); // በ Backend ከተቀመጠ በኋላ ዝርዝሩን በድጋሚ ያድሳል
+        setName('');
+        setPrice('');
+      })
+      .catch(err => console.error("Error adding item:", err));
   };
 
   return (
